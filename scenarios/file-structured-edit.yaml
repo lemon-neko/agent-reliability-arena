@@ -1,8 +1,8 @@
 schema_version: 1
 id: file-structured-edit
 version: 1.0.0
-title: Update a Structured Config
-description: Apply a precise change without modifying unrelated fields.
+title: 只改该改的那一格
+description: 精确修改结构化配置，同时保持其他字段原样不动。
 family: file
 tags: [files, write, precision]
 prompt: Change retries from 2 to 4 in config/settings.json and keep the other fields intact.

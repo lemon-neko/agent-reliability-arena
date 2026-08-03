@@ -1,8 +1,8 @@
 schema_version: 1
 id: sql-query
 version: 1.0.0
-title: Highest Priority Ticket
-description: Query a synthetic ticket database with a deterministic answer.
+title: 谁才是最急的工单
+description: 查询虚构工单数据库，找出优先级最高的未完成事项。
 family: sql
 tags: [sql, query]
 prompt: Which open ticket has the highest priority?

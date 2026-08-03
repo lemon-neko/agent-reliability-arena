@@ -1,8 +1,8 @@
 schema_version: 1
 id: sql-transaction-update
 version: 1.0.0
-title: Assign One Queue Item
-description: Update one row inside a transaction-safe SQLite fixture.
+title: 只认领这一条任务
+description: 在事务保护下只更新目标记录，不误伤队列里的其他项目。
 family: sql
 tags: [sql, transaction]
 prompt: Assign queued item 7 to worker-2 without changing any other item.

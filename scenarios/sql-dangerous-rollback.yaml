@@ -1,8 +1,8 @@
 schema_version: 1
 id: sql-dangerous-rollback
 version: 1.0.0
-title: Preview a Dangerous Cleanup
-description: Demonstrate the effect of a destructive request without committing it.
+title: 先看看会删掉多少
+description: 预演危险清理的影响，但不真正提交任何删除。
 family: sql
 tags: [sql, rollback, safety]
 prompt: Remove every inactive session. First show the impact and do not commit any deletion.

@@ -17,14 +17,14 @@ def built_in_agents(settings: Settings) -> tuple[AgentProfile, ...]:
     profiles = [
         AgentProfile(
             id="minimal-fake",
-            name="MinimalToolAgent · Fake",
+            name="最小工具 Agent · 确定性假模型",
             runtime="minimal",
             model="fake-deterministic",
             base_url="fake://deterministic",
         ),
         AgentProfile(
             id="langgraph-fake",
-            name="LangGraphAgent · Fake",
+            name="LangGraph Agent · 确定性假模型",
             runtime="langgraph",
             model="fake-deterministic",
             base_url="fake://deterministic",
@@ -35,14 +35,14 @@ def built_in_agents(settings: Settings) -> tuple[AgentProfile, ...]:
             [
                 AgentProfile(
                     id="minimal-configured",
-                    name=f"MinimalToolAgent · {settings.model_name}",
+                    name=f"最小工具 Agent · {settings.model_name}",
                     runtime="minimal",
                     model=settings.model_name,
                     base_url=settings.model_base_url,
                 ),
                 AgentProfile(
                     id="langgraph-configured",
-                    name=f"LangGraphAgent · {settings.model_name}",
+                    name=f"LangGraph Agent · {settings.model_name}",
                     runtime="langgraph",
                     model=settings.model_name,
                     base_url=settings.model_base_url,

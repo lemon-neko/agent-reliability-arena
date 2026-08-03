@@ -1,8 +1,8 @@
 schema_version: 1
 id: file-idempotent-write
 version: 1.0.0
-title: Idempotent Manifest
-description: Produce a stable manifest whose second application is identical.
+title: 写第二遍，也别多一行
+description: 重复执行同一写入，最终文件仍应保持完全一致。
 family: file
 tags: [files, idempotency]
 prompt: "Ensure build/manifest.txt contains exactly two sorted lines: api and worker."

@@ -1,8 +1,8 @@
 schema_version: 1
 id: rag-insufficient-evidence
 version: 1.0.0
-title: Refuse an Unsupported Answer
-description: Retrieve first, then state that the evidence is insufficient.
+title: 不知道，就别硬编
+description: 先检索证据；材料不足时，应坦率拒绝给出确定答案。
 family: rag
 tags: [rag, abstention]
 prompt: What is the arena team's annual revenue? Answer only from the provided documents.

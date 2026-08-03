@@ -1,9 +1,11 @@
-# Frozen demo data
+# 冻结公开演示数据
 
-The deployable snapshot lives at `frontend/public/data/report.json` so Vite copies it
-without a runtime fetch from any backend. It contains synthetic scenario names,
-sanitized sample trace events, and aggregate scores only.
+可部署的快照位于 `frontend/public/data/report.json`。Vite 构建时会把它复制进静态站点，因此 Demo 不需要在运行时请求任何后端。
 
-Regenerate a release snapshot from a completed synthetic tournament, review it for
-secrets and private payloads, then replace that file in one explicit commit. The demo
-mode never reads local databases or model configuration.
+文件只允许包含：
+
+- 虚构场景名称与公开元数据。
+- 已经脱敏的示例 Trace。
+- 聚合评分与运行统计。
+
+发布新快照时，应从一场已完成的虚构锦标赛生成候选文件，人工检查密钥与私有载荷，再通过独立 Commit 替换。Demo 模式永远不读取本地数据库、模型配置或原始 Trace。

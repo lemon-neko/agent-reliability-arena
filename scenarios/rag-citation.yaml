@@ -1,8 +1,8 @@
 schema_version: 1
 id: rag-citation
 version: 1.0.0
-title: Answer with a Source
-description: Retrieve a synthetic policy and cite the evidence file.
+title: 说答案，也要交出处
+description: 从虚构政策文档中检索答案，并正确引用证据文件。
 family: rag
 tags: [rag, citation]
 prompt: How long are frozen reports retained? Cite the source.

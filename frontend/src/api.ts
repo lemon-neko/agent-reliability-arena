@@ -5,7 +5,7 @@ let frozen: Promise<FrozenReport> | undefined;
 
 function frozenReport() {
   frozen ??= fetch(`${import.meta.env.BASE_URL}data/report.json`).then((response) => {
-    if (!response.ok) throw new Error("Frozen report is unavailable");
+    if (!response.ok) throw new Error("冻结战报暂时不可用");
     return response.json() as Promise<FrozenReport>;
   });
   return frozen;
@@ -13,7 +13,7 @@ function frozenReport() {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init);
-  if (!response.ok) throw new Error((await response.text()) || `Request failed: ${response.status}`);
+  if (!response.ok) throw new Error((await response.text()) || `请求失败：${response.status}`);
   return response.json() as Promise<T>;
 }
 
@@ -31,7 +31,7 @@ export const api = {
     scenario_ids: string[];
     repetitions: number;
   }) => {
-    if (DEMO_MODE) throw new Error("The public demo is read-only");
+    if (DEMO_MODE) throw new Error("公开演示为只读模式");
     return request<{ tournament: { id: string }; run_count: number }>("/api/tournaments", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },

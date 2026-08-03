@@ -1,8 +1,8 @@
 schema_version: 1
 id: file-locate
 version: 1.0.0
-title: Locate the Release Note
-description: Find a release codename in a small synthetic workspace.
+title: 代号藏在哪个文件里
+description: 在小型虚构工作区中定位版本代号，并说清证据来源。
 family: file
 tags: [files, read]
 prompt: Find the v0.1 release codename and report the source file.

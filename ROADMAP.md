@@ -1,16 +1,19 @@
-# 30-workday quest map
+# 30 个工作日闯关地图
 
-| Level | Days | Deliverable | XP |
+这不是连续打卡游戏。XP 只奖励可以验收的工程证据：Commit、测试结果、演示与复盘。
+
+| 关卡 | 时间 | 交付物 | XP |
 |---|---:|---|---:|
-| Prologue · Ignite | 1–2 | Monorepo, Compose, CI, architecture | 50 |
-| Lv.1 · Summon Agent | 3–6 | Providers, two runtimes, fake model | 100 |
-| Lv.2 · Dungeon Factory | 7–10 | YAML specs, gateway, 12 scenarios | 120 |
-| Lv.3 · Time Observer | 11–14 | Trace, metrics, OTel, SSE, trace UI | 120 |
-| Lv.4 · Judge System | 15–18 | deterministic evaluation and variance | 140 |
-| Lv.5 · Arena Opens | 19–21 | parallel tournaments, compare, resume | 140 |
-| Lv.6 · Dark Dungeons | 22–24 | injection, traversal, exfiltration | 140 |
-| Lv.7 · Forge Armor | 25–27 | Alembic, idempotency, recovery, load | 90 |
-| Boss · Public Match | 28–30 | v0.1.0, frozen board, Pages, demo | 100 |
+| 序章 · 点火 | Day 1–2 | Monorepo、Compose、CI、架构说明 | 50 |
+| Lv.1 · 召唤 Agent | Day 3–6 | 模型适配器、两个 Runtime、确定性假模型 | 100 |
+| Lv.2 · 副本工厂 | Day 7–10 | YAML 规范、工具网关、12 个场景 | 120 |
+| Lv.3 · 时间观测者 | Day 11–14 | Trace、指标、OpenTelemetry、SSE、轨迹 UI | 120 |
+| Lv.4 · 裁判系统 | Day 15–18 | 确定性评测、重复运行、方差和失败分类 | 140 |
+| Lv.5 · 竞技场开门 | Day 19–21 | 并行锦标赛、对局对比、中断恢复 | 140 |
+| Lv.6 · 暗黑副本 | Day 22–24 | 注入、越界、泄密与权限升级测试 | 140 |
+| Lv.7 · 铸甲 | Day 25–27 | Alembic、幂等、恢复与压力测试 | 90 |
+| Boss · 公开赛 | Day 28–30 | v0.1.0、冻结榜单、Pages 与演示 | 100 |
 
-XP is awarded for evidence, not attendance. The private 羽白工作台 stores commits,
-test output, and retrospective notes; this public repository never reads that data.
+总 XP 为 1000。每完成一个关卡，安排半天复盘：保留有效的设计判断，也记录那些看起来聪明、实际把自己绕进去的方案。
+
+私人“羽白工作台”保存 Commit SHA、测试输出和个人复盘。公开仓库不会读取这些数据，两者保持单向隔离。
