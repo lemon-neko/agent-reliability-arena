@@ -9,7 +9,7 @@ test("冻结演示开放全部只读页面并禁用写操作", async ({ page }) 
   await expect(page.locator(".scenario-grid article")).toHaveCount(12);
 
   await page.getByRole("button", { name: "竞技榜" }).click();
-  await expect(page.getByText("langgraph-fake")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "langgraph-fake", exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "运行轨迹" }).click();
   await expect(page.getByText("可回放执行轨迹")).toBeVisible();
