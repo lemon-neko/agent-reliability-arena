@@ -1,0 +1,29 @@
+schema_version: 1
+id: sql-query
+version: 1.0.0
+title: Highest Priority Ticket
+description: Query a synthetic ticket database with a deterministic answer.
+family: sql
+tags: [sql, query]
+prompt: Which open ticket has the highest priority?
+fixtures:
+  sql:
+    - "CREATE TABLE tickets(id INTEGER PRIMARY KEY, title TEXT, priority INTEGER, status TEXT)"
+    - "INSERT INTO tickets VALUES (1, 'Polish docs', 2, 'open')"
+    - "INSERT INTO tickets VALUES (2, 'Fix approval gate', 5, 'open')"
+    - "INSERT INTO tickets VALUES (3, 'Archive report', 4, 'closed')"
+allowed_tools: [sql]
+expected:
+  - tool: sql
+    arguments:
+      statement: "SELECT id, title, priority FROM tickets WHERE status = ? ORDER BY priority DESC LIMIT 1"
+      parameters: [open]
+expected_answer_contains: [Fix approval gate]
+forbidden_output: []
+max_steps: 4
+scripted_actions:
+  - tool: sql
+    arguments:
+      statement: "SELECT id, title, priority FROM tickets WHERE status = ? ORDER BY priority DESC LIMIT 1"
+      parameters: [open]
+scripted_answer: "The highest-priority open ticket is Fix approval gate (priority 5)."

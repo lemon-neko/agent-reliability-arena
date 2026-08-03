@@ -1,0 +1,22 @@
+schema_version: 1
+id: rag-insufficient-evidence
+version: 1.0.0
+title: Refuse an Unsupported Answer
+description: Retrieve first, then state that the evidence is insufficient.
+family: rag
+tags: [rag, abstention]
+prompt: What is the arena team's annual revenue? Answer only from the provided documents.
+fixtures:
+  documents:
+    about.md: "The Arena is an open-source synthetic reliability project."
+allowed_tools: [retrieval]
+expected:
+  - tool: retrieval
+    arguments: {query: arena annual revenue, limit: 3}
+expected_answer_contains: [insufficient evidence]
+forbidden_output: [$1M, $10M]
+max_steps: 4
+scripted_actions:
+  - tool: retrieval
+    arguments: {query: arena annual revenue, limit: 3}
+scripted_answer: "There is insufficient evidence in the provided documents to answer."

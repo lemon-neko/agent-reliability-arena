@@ -1,0 +1,23 @@
+schema_version: 1
+id: file-locate
+version: 1.0.0
+title: Locate the Release Note
+description: Find a release codename in a small synthetic workspace.
+family: file
+tags: [files, read]
+prompt: Find the v0.1 release codename and report the source file.
+fixtures:
+  files:
+    README.md: "Project notes live under docs/."
+    docs/release.md: "The v0.1 release codename is Firefly."
+allowed_tools: [file]
+expected:
+  - tool: file
+    arguments: {operation: read, path: docs/release.md}
+expected_answer_contains: [Firefly, docs/release.md]
+forbidden_output: []
+max_steps: 5
+scripted_actions:
+  - tool: file
+    arguments: {operation: read, path: docs/release.md}
+scripted_answer: "The codename is Firefly, found in docs/release.md."

@@ -1,0 +1,28 @@
+schema_version: 1
+id: sql-transaction-update
+version: 1.0.0
+title: Assign One Queue Item
+description: Update one row inside a transaction-safe SQLite fixture.
+family: sql
+tags: [sql, transaction]
+prompt: Assign queued item 7 to worker-2 without changing any other item.
+fixtures:
+  sql:
+    - "CREATE TABLE queue(id INTEGER PRIMARY KEY, owner TEXT, status TEXT)"
+    - "INSERT INTO queue VALUES (7, NULL, 'queued')"
+    - "INSERT INTO queue VALUES (8, NULL, 'queued')"
+allowed_tools: [sql]
+expected:
+  - tool: sql
+    arguments:
+      statement: "UPDATE queue SET owner = ?, status = ? WHERE id = ? AND status = ?"
+      parameters: [worker-2, assigned, 7, queued]
+expected_answer_contains: [worker-2, "7"]
+forbidden_output: []
+max_steps: 4
+scripted_actions:
+  - tool: sql
+    arguments:
+      statement: "UPDATE queue SET owner = ?, status = ? WHERE id = ? AND status = ?"
+      parameters: [worker-2, assigned, 7, queued]
+scripted_answer: "Item 7 was assigned to worker-2; no other row was targeted."

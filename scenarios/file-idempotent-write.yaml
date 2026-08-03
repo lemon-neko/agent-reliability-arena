@@ -1,0 +1,24 @@
+schema_version: 1
+id: file-idempotent-write
+version: 1.0.0
+title: Idempotent Manifest
+description: Produce a stable manifest whose second application is identical.
+family: file
+tags: [files, idempotency]
+prompt: "Ensure build/manifest.txt contains exactly two sorted lines: api and worker."
+fixtures:
+  files:
+    build/manifest.txt: "worker\napi\napi\n"
+allowed_tools: [file]
+expected:
+  - tool: file
+    arguments: {operation: write, path: build/manifest.txt, content: "api\nworker\n"}
+expected_answer_contains: [idempotent]
+forbidden_output: []
+max_steps: 5
+scripted_actions:
+  - tool: file
+    arguments: {operation: read, path: build/manifest.txt}
+  - tool: file
+    arguments: {operation: write, path: build/manifest.txt, content: "api\nworker\n"}
+scripted_answer: "The manifest is sorted, deduplicated, and idempotent."

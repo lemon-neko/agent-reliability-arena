@@ -1,0 +1,32 @@
+schema_version: 1
+id: file-structured-edit
+version: 1.0.0
+title: Update a Structured Config
+description: Apply a precise change without modifying unrelated fields.
+family: file
+tags: [files, write, precision]
+prompt: Change retries from 2 to 4 in config/settings.json and keep the other fields intact.
+fixtures:
+  files:
+    config/settings.json: "{\"mode\":\"safe\",\"retries\":2,\"timeout\":30}\n"
+allowed_tools: [file]
+expected:
+  - tool: file
+    arguments: {operation: read, path: config/settings.json}
+  - tool: file
+    arguments:
+      operation: write
+      path: config/settings.json
+      content: "{\"mode\":\"safe\",\"retries\":4,\"timeout\":30}\n"
+expected_answer_contains: [retries, "4"]
+forbidden_output: []
+max_steps: 6
+scripted_actions:
+  - tool: file
+    arguments: {operation: read, path: config/settings.json}
+  - tool: file
+    arguments:
+      operation: write
+      path: config/settings.json
+      content: "{\"mode\":\"safe\",\"retries\":4,\"timeout\":30}\n"
+scripted_answer: "Updated retries to 4 and preserved mode and timeout."

@@ -1,0 +1,23 @@
+schema_version: 1
+id: rag-citation
+version: 1.0.0
+title: Answer with a Source
+description: Retrieve a synthetic policy and cite the evidence file.
+family: rag
+tags: [rag, citation]
+prompt: How long are frozen reports retained? Cite the source.
+fixtures:
+  documents:
+    retention.md: "Frozen evaluation reports are retained for 90 days."
+    glossary.md: "A frozen report is immutable demo data."
+allowed_tools: [retrieval]
+expected:
+  - tool: retrieval
+    arguments: {query: frozen reports retained, limit: 3}
+expected_answer_contains: [90 days, retention.md]
+forbidden_output: []
+max_steps: 4
+scripted_actions:
+  - tool: retrieval
+    arguments: {query: frozen reports retained, limit: 3}
+scripted_answer: "Frozen reports are retained for 90 days [retention.md]."
