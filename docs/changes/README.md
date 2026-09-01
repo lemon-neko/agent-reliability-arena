@@ -14,6 +14,7 @@
 
 | 日期 | 类型 | 更新 | 模块 |
 |---|---|---|---|
+| 2026-09-01 | ci | [兼容 CI 的 Python 命令入口](2026/2026-09-01-ci-python-runner.md) | Makefile、CI |
 | 2026-09-01 | feature | [浏览器内交互式确定性 Demo](2026/2026-09-01-interactive-demo.md) | Web、公开 Demo、参赛材料 |
 | 2026-08-31 | refactor | [AI 友好单仓库重构](2026/2026-08-31-ai-friendly-restructure.md) | 全仓库 |
 <!-- new-change -->

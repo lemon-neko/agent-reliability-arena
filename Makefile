@@ -1,29 +1,29 @@
 .PHONY: setup dev-api dev-web test-api test-web lint-api check-scenarios \
 	check-governance export-scenario-schema demo security check compose-up compose-down new-change
 
-PYTHON := .venv/bin/python
-PIP := .venv/bin/pip
+ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+PYTHON := $(if $(wildcard $(ROOT_DIR)/.venv/bin/python),$(ROOT_DIR)/.venv/bin/python,python3)
 
 setup:
 	python3.12 -m venv .venv
-	$(PIP) install -e 'apps/api[dev]'
+	.venv/bin/python -m pip install -e 'apps/api[dev]'
 	cd apps/web && pnpm install --frozen-lockfile
 	cd apps/web && pnpm exec playwright install chromium
 
 dev-api:
-	.venv/bin/uvicorn arena.interfaces.http.app:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000
+	$(PYTHON) -m uvicorn arena.interfaces.http.app:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000
 
 dev-web:
 	cd apps/web && pnpm dev
 
 test-api:
-	cd apps/api && ../../.venv/bin/pytest --cov --cov-report=term-missing
+	cd apps/api && $(PYTHON) -m pytest --cov --cov-report=term-missing
 
 test-web:
 	cd apps/web && pnpm build && pnpm test:e2e
 
 lint-api:
-	cd apps/api && ../../.venv/bin/ruff check src tests migrations ../../tools
+	cd apps/api && $(PYTHON) -m ruff check src tests migrations ../../tools
 
 export-scenario-schema:
 	$(PYTHON) tools/export_scenario_schema.py
