@@ -14,6 +14,7 @@
 
 | 日期 | 类型 | 更新 | 模块 |
 |---|---|---|---|
+| 2026-09-01 | fix | [Runtime 源码跟踪与 CI 一致性](2026/2026-09-01-runtime-source-tracking.md) | API、CI |
 | 2026-09-01 | feature | [Agent 风险体检、报告与公开基准](2026/2026-09-01-agent-risk-assessment.md) | API、Web、风险包、Registry、文档 |
 | 2026-09-01 | ci | [兼容 CI 的 Python 命令入口](2026/2026-09-01-ci-python-runner.md) | Makefile、CI |
 | 2026-09-01 | feature | [浏览器内交互式确定性 Demo](2026/2026-09-01-interactive-demo.md) | Web、公开 Demo、参赛材料 |
