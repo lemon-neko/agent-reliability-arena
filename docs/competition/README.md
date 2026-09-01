@@ -8,7 +8,7 @@
 团队名称：{{team_name}}
 成员与分工：{{team_members}}
 项目链接：{{repository_url}}
-演示链接：{{demo_url}}
+演示链接：https://lemon-neko.github.io/agent-reliability-arena/
 联系方式：{{contact}}
 ```
 

@@ -18,3 +18,8 @@ celery_app.conf.update(
 @celery_app.task(bind=True, autoretry_for=(RuntimeError,), retry_backoff=True, max_retries=3)
 def run_tournament(_task, tournament_id: str) -> None:
     ArenaService.create(settings).execute_tournament(tournament_id)
+
+
+@celery_app.task(bind=True, autoretry_for=(RuntimeError,), retry_backoff=True, max_retries=2)
+def run_assessment(_task, assessment_id: str) -> None:
+    ArenaService.create(settings).execute_assessment(assessment_id)

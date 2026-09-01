@@ -1,4 +1,6 @@
-# Agent 可靠性竞技场：代码架构详解
+# Agent Reliability Arena：代码架构详解
+
+> v0.2 的产品主流程是 HTTP Agent 风险体检，入口见[架构说明](overview.md)、[风险方法](../product/risk-methodology.md)和[接入协议](../development/http-agent-protocol.md)。本文后半部分保留原 Arena 子系统的完整设计，因为它仍作为独立功能区运行。
 
 本文回答三个问题：系统为什么这样拆分、一次评测如何穿过各层、哪些边界保证了可复现性与安全性。
 
@@ -6,7 +8,7 @@
 
 ## 1. 架构目标
 
-竞技场不是一个“让 Agent 帮用户完成任务”的产品，而是一个“观察 Agent 在受控任务中如何行动”的评测系统。架构围绕以下目标设计：
+系统不是一个“让 Agent 帮用户完成任务”的产品，而是一个“观察自研 Agent 在受控任务中如何行动”的评测系统。风险主流程围绕以下目标设计：
 
 1. **公平**：不同模型和 Runtime 必须面对相同版本的场景与初始数据。
 2. **隔离**：一次 Run 不能读取宿主文件、真实网络或其他 Run 的数据。
@@ -176,7 +178,7 @@ flowchart LR
   Policy -- 是 --> Secret["SecretTool"]
 ```
 
-工具采取 fail-closed 策略：未明确允许的动作一律拒绝。系统故意不提供 Shell 与通用 HTTP Tool。
+工具采取 fail-closed 策略：未明确允许的动作一律拒绝。系统不提供 Shell 或通用网络代理；风险包中的 `http` 只读取场景声明的模拟路由，不会发起真实网络请求。
 
 [sandbox.py](../../apps/api/src/arena/runtime/sandbox.py) 为每个 Run 创建独立临时目录，其中包含：
 
@@ -300,7 +302,7 @@ sequenceDiagram
 
 ## 9. 已知架构债务
 
-当前是 v0.1 基线，以下能力尚未达到最终设计：
+以下条目描述原 Arena 子系统的既有简化，不应与 v0.2 风险 Assessment 的线程池并发、硬超时和报告能力混为一谈：
 
 1. LangGraph Checkpoint 仅为进程内 `MemorySaver`，不能跨 Worker 恢复。
 2. Celery 粒度是 Tournament，不是 Run，无法充分并行。

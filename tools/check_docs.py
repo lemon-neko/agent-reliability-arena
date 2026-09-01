@@ -18,6 +18,9 @@ REQUIRED = (
     "apps/web/README.md",
     "packages/scenarios/AGENTS.md",
     "packages/scenarios/README.md",
+    "packages/risk-packs/AGENTS.md",
+    "packages/risk-packs/README.md",
+    "packages/registry/README.md",
 )
 
 

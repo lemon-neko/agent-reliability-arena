@@ -2,6 +2,8 @@
 
 `catalog/` 保存 12 个版本化 YAML 副本，覆盖文件、SQL、RAG、人工审批与安全五类能力。场景格式由 [JSON Schema](scenario-v1.schema.json) 描述，权威 Python 类型是 `ScenarioSpec`。
 
+这些场景继续服务多 Agent 竞技场。面向自研 HTTP Agent 的上线风险体检使用独立的 [风险测试包](../risk-packs/README.md)，两者不得混用评分语义。
+
 新增场景时：
 
 1. 复制 [示例场景](example.yaml)。

@@ -1,0 +1,261 @@
+{
+  "$defs": {
+    "FindingSeverity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "FindingSeverity",
+      "type": "string"
+    },
+    "RiskCategory": {
+      "enum": [
+        "prompt_injection",
+        "data_exposure",
+        "authorization",
+        "human_control",
+        "tool_safety",
+        "grounding",
+        "resilience",
+        "resource_control"
+      ],
+      "title": "RiskCategory",
+      "type": "string"
+    },
+    "RiskDimension": {
+      "enum": [
+        "security_privacy",
+        "authorization_control",
+        "side_effect_safety",
+        "correctness_grounding",
+        "resilience_idempotency",
+        "efficiency_resources"
+      ],
+      "title": "RiskDimension",
+      "type": "string"
+    },
+    "RiskOracle": {
+      "additionalProperties": false,
+      "properties": {
+        "answer_contains": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Answer Contains",
+          "type": "array"
+        },
+        "answer_excludes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Answer Excludes",
+          "type": "array"
+        },
+        "required_tools": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Tools",
+          "type": "array"
+        },
+        "required_arguments": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Required Arguments",
+          "type": "object"
+        },
+        "prohibited_tools": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Prohibited Tools",
+          "type": "array"
+        },
+        "approval_before_tools": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Approval Before Tools",
+          "type": "array"
+        },
+        "max_tool_calls": {
+          "default": 6,
+          "maximum": 30,
+          "minimum": 0,
+          "title": "Max Tool Calls",
+          "type": "integer"
+        }
+      },
+      "title": "RiskOracle",
+      "type": "object"
+    },
+    "ToolFixture": {
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Files",
+          "type": "object"
+        },
+        "documents": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Documents",
+          "type": "object"
+        },
+        "sql": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sql",
+          "type": "array"
+        },
+        "secrets": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Secrets",
+          "type": "object"
+        },
+        "http_routes": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Http Routes",
+          "type": "object"
+        },
+        "business_records": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Business Records",
+          "type": "object"
+        },
+        "tool_failures": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Tool Failures",
+          "type": "object"
+        }
+      },
+      "title": "ToolFixture",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9-]{2,80}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Version",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "category": {
+      "$ref": "#/$defs/RiskCategory"
+    },
+    "dimension": {
+      "$ref": "#/$defs/RiskDimension"
+    },
+    "severity": {
+      "$ref": "#/$defs/FindingSeverity"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "Tags",
+      "type": "array"
+    },
+    "prompt": {
+      "title": "Prompt",
+      "type": "string"
+    },
+    "fixtures": {
+      "$ref": "#/$defs/ToolFixture"
+    },
+    "allowed_tools": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Tools",
+      "type": "array"
+    },
+    "oracle": {
+      "$ref": "#/$defs/RiskOracle"
+    },
+    "remediation": {
+      "title": "Remediation",
+      "type": "string"
+    },
+    "variant_axes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Variant Axes",
+      "type": "array"
+    },
+    "max_steps": {
+      "default": 8,
+      "maximum": 30,
+      "minimum": 1,
+      "title": "Max Steps",
+      "type": "integer"
+    },
+    "timeout_seconds": {
+      "default": 30,
+      "exclusiveMinimum": 0,
+      "maximum": 120,
+      "title": "Timeout Seconds",
+      "type": "number"
+    },
+    "simulated_approval": {
+      "default": false,
+      "title": "Simulated Approval",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "title",
+    "description",
+    "category",
+    "dimension",
+    "severity",
+    "prompt",
+    "oracle",
+    "remediation"
+  ],
+  "title": "RiskCase",
+  "type": "object"
+}

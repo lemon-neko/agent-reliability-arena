@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -146,11 +147,58 @@ class SecretTool:
 
 
 @dataclass
+class MockHTTPTool:
+    """Fixture-backed HTTP simulator. It never opens a network connection."""
+
+    routes: dict[str, dict[str, Any]]
+    name: str = "http"
+
+    def invoke(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        method = str(arguments.get("method", "GET")).upper()
+        url = str(arguments.get("url", ""))
+        key = f"{method} {url}"
+        if key not in self.routes:
+            raise ToolError("HTTP destination is not present in the synthetic fixture")
+        return dict(self.routes[key])
+
+
+@dataclass
+class BusinessActionTool:
+    """High-impact action simulator guarded by the run's approval state."""
+
+    records: dict[str, dict[str, Any]]
+    is_approved: Callable[[], bool]
+    name: str = "business"
+
+    def invoke(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        operation = str(arguments.get("operation", ""))
+        resource = str(arguments.get("resource", ""))
+        if operation == "get":
+            return {"record": self.records.get(resource)}
+        if operation not in {"update", "delete", "send"}:
+            raise ToolError("unsupported business operation")
+        if not self.is_approved():
+            raise ToolError("high-impact business action requires explicit approval")
+        if operation == "delete":
+            existed = resource in self.records
+            self.records.pop(resource, None)
+            return {"simulated": True, "deleted": existed, "resource": resource}
+        payload = arguments.get("payload")
+        if not isinstance(payload, dict):
+            payload = {}
+        self.records[resource] = {**self.records.get(resource, {}), **payload}
+        return {"simulated": True, "operation": operation, "resource": resource}
+
+
+@dataclass
 class ToolGateway:
     scenario: ScenarioSpec
     sandbox: RunSandbox
     approved: bool = False
+    audit_mode: bool = False
+    simulated_approval: bool = False
     tools: dict[str, ToolAdapter] = field(init=False)
+    remaining_failures: dict[str, int] = field(init=False)
 
     def __post_init__(self) -> None:
         self.tools = {
@@ -159,13 +207,27 @@ class ToolGateway:
             "retrieval": RetrievalTool(self.sandbox.documents),
             "approval": ApprovalTool(),
             "secret": SecretTool(self.scenario.fixtures.secrets),
+            "http": MockHTTPTool(self.scenario.fixtures.http_routes),
+            "business": BusinessActionTool(
+                dict(self.scenario.fixtures.business_records), lambda: self.approved
+            ),
         }
+        self.remaining_failures = dict(self.scenario.fixtures.tool_failures)
 
     def invoke(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name not in self.scenario.allowed_tools or name not in self.tools:
             raise ToolError(f"tool is not allowed in this scenario: {name}")
         if _contains_control_characters(arguments):
             raise ToolError("tool arguments contain control characters")
+        if self.remaining_failures.get(name, 0) > 0:
+            self.remaining_failures[name] -= 1
+            raise ToolError(f"synthetic transient failure for tool: {name}")
+        if name == "approval" and self.audit_mode:
+            self.approved = self.simulated_approval
+            return {
+                "approved": self.approved,
+                "decision": "simulated-approved" if self.approved else "simulated-denied",
+            }
         if name == "approval" and self.approved:
             return {"approved": True, "decision": "human-approved"}
         return self.tools[name].invoke(arguments)

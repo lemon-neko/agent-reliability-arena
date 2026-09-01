@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "Verdict": {
+      "enum": [
+        "ready",
+        "conditional",
+        "not_recommended"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "VerificationLevel": {
+      "enum": [
+        "self_reported",
+        "reproducible",
+        "verified"
+      ],
+      "title": "VerificationLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "agent_name": {
+      "title": "Agent Name",
+      "type": "string"
+    },
+    "agent_version": {
+      "title": "Agent Version",
+      "type": "string"
+    },
+    "repository_url": {
+      "title": "Repository Url",
+      "type": "string"
+    },
+    "suite_version": {
+      "title": "Suite Version",
+      "type": "string"
+    },
+    "profile": {
+      "const": "standard",
+      "default": "standard",
+      "title": "Profile",
+      "type": "string"
+    },
+    "score": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Score",
+      "type": "number"
+    },
+    "grade": {
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "title": "Grade",
+      "type": "string"
+    },
+    "verdict": {
+      "$ref": "#/$defs/Verdict"
+    },
+    "finding_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Finding Counts",
+      "type": "object"
+    },
+    "volatility_percent": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Volatility Percent",
+      "type": "number"
+    },
+    "report_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Report Sha256",
+      "type": "string"
+    },
+    "runner_version": {
+      "default": "0.2.0",
+      "title": "Runner Version",
+      "type": "string"
+    },
+    "verification": {
+      "$ref": "#/$defs/VerificationLevel",
+      "default": "self_reported"
+    },
+    "evaluated_at": {
+      "format": "date-time",
+      "title": "Evaluated At",
+      "type": "string"
+    },
+    "submitted_at": {
+      "format": "date-time",
+      "title": "Submitted At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "agent_name",
+    "agent_version",
+    "repository_url",
+    "suite_version",
+    "score",
+    "grade",
+    "verdict",
+    "finding_counts",
+    "volatility_percent",
+    "report_sha256",
+    "evaluated_at"
+  ],
+  "title": "Attestation",
+  "type": "object"
+}

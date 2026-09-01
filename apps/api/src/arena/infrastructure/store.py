@@ -1,4 +1,4 @@
-"""SQLAlchemy persistence for tournaments, runs, traces, approvals, and scores."""
+"""SQLAlchemy persistence for arena runs and private risk assessments."""
 
 from __future__ import annotations
 
@@ -32,6 +32,16 @@ from arena.domain.models import (
     Tournament,
     TournamentStatus,
     TraceEvent,
+)
+from arena.domain.risk import (
+    AgentTarget,
+    Assessment,
+    AssessmentStatus,
+    Attestation,
+    Finding,
+    RiskReport,
+    RiskRunOutcome,
+    RiskTestRun,
 )
 
 
@@ -120,6 +130,82 @@ class FailureEmbeddingRecord(Base):
     embedding: Mapped[list[float]] = mapped_column(Vector(16))
 
 
+class AgentTargetRecord(Base):
+    __tablename__ = "agent_targets"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class AssessmentRecord(Base):
+    __tablename__ = "assessments"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    target_id: Mapped[str] = mapped_column(
+        ForeignKey("agent_targets.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class RiskTestRunRecord(Base):
+    __tablename__ = "risk_test_runs"
+    __table_args__ = (
+        UniqueConstraint("assessment_id", "variant_id", "repetition"),
+    )
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    assessment_id: Mapped[str] = mapped_column(
+        ForeignKey("assessments.id", ondelete="CASCADE"), index=True
+    )
+    variant_id: Mapped[str] = mapped_column(String(120))
+    repetition: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class RiskTraceRecord(Base):
+    __tablename__ = "risk_trace_events"
+    __table_args__ = (UniqueConstraint("test_run_id", "sequence"),)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    test_run_id: Mapped[str] = mapped_column(
+        ForeignKey("risk_test_runs.id", ondelete="CASCADE"), index=True
+    )
+    sequence: Mapped[int] = mapped_column(Integer)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class FindingRecord(Base):
+    __tablename__ = "risk_findings"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    assessment_id: Mapped[str] = mapped_column(
+        ForeignKey("assessments.id", ondelete="CASCADE"), index=True
+    )
+    test_run_id: Mapped[str] = mapped_column(
+        ForeignKey("risk_test_runs.id", ondelete="CASCADE"), index=True
+    )
+    severity: Mapped[str] = mapped_column(String(20), index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class RiskReportRecord(Base):
+    __tablename__ = "risk_reports"
+    assessment_id: Mapped[str] = mapped_column(
+        ForeignKey("assessments.id", ondelete="CASCADE"), primary_key=True
+    )
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+    html: Mapped[str] = mapped_column(Text)
+
+
+class AttestationRecord(Base):
+    __tablename__ = "attestations"
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    assessment_id: Mapped[str] = mapped_column(
+        ForeignKey("assessments.id", ondelete="CASCADE"), index=True
+    )
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
 class ArenaStore:
     def __init__(self, database_url: str) -> None:
         kwargs = {"future": True}
@@ -150,6 +236,203 @@ class ArenaStore:
         with Session(self.engine) as session:
             row = session.get(AgentRecord, agent_id)
         return AgentProfile.model_validate(row.data) if row else None
+
+    def save_agent_target(self, target: AgentTarget) -> AgentTarget:
+        with Session(self.engine) as session, session.begin():
+            row = session.get(AgentTargetRecord, target.id)
+            data = target.model_dump(mode="json")
+            if row:
+                row.data = data
+            else:
+                session.add(
+                    AgentTargetRecord(id=target.id, created_at=target.created_at, data=data)
+                )
+        return target
+
+    def agent_targets(self) -> tuple[AgentTarget, ...]:
+        with Session(self.engine) as session:
+            rows = session.scalars(
+                select(AgentTargetRecord).order_by(AgentTargetRecord.created_at.desc())
+            ).all()
+        return tuple(AgentTarget.model_validate(row.data) for row in rows)
+
+    def agent_target(self, target_id: str) -> AgentTarget | None:
+        with Session(self.engine) as session:
+            row = session.get(AgentTargetRecord, target_id)
+        return AgentTarget.model_validate(row.data) if row else None
+
+    def create_assessment(
+        self, assessment: Assessment, runs: tuple[RiskTestRun, ...]
+    ) -> Assessment:
+        with Session(self.engine) as session, session.begin():
+            session.add(
+                AssessmentRecord(
+                    id=assessment.id,
+                    target_id=assessment.target_id,
+                    status=assessment.status.value,
+                    created_at=assessment.created_at,
+                    data=assessment.model_dump(mode="json"),
+                )
+            )
+            session.add_all(
+                [
+                    RiskTestRunRecord(
+                        id=run.id,
+                        assessment_id=run.assessment_id,
+                        variant_id=run.variant_id,
+                        repetition=run.repetition,
+                        status=run.status.value,
+                        created_at=run.created_at,
+                        data=run.model_dump(mode="json"),
+                    )
+                    for run in runs
+                ]
+            )
+        return assessment
+
+    def save_assessment(self, assessment: Assessment) -> Assessment:
+        with Session(self.engine) as session, session.begin():
+            row = session.get(AssessmentRecord, assessment.id)
+            if row is None:
+                raise KeyError(assessment.id)
+            row.status = assessment.status.value
+            row.data = assessment.model_dump(mode="json")
+        return assessment
+
+    def assessments(self, target_id: str | None = None) -> tuple[Assessment, ...]:
+        query = select(AssessmentRecord)
+        if target_id:
+            query = query.where(AssessmentRecord.target_id == target_id)
+        query = query.order_by(AssessmentRecord.created_at.desc())
+        with Session(self.engine) as session:
+            rows = session.scalars(query).all()
+        return tuple(Assessment.model_validate(row.data) for row in rows)
+
+    def assessment(self, assessment_id: str) -> Assessment | None:
+        with Session(self.engine) as session:
+            row = session.get(AssessmentRecord, assessment_id)
+        return Assessment.model_validate(row.data) if row else None
+
+    def request_assessment_cancel(self, assessment_id: str) -> Assessment:
+        assessment = self.assessment(assessment_id)
+        if assessment is None:
+            raise KeyError(assessment_id)
+        if assessment.status in {AssessmentStatus.COMPLETED, AssessmentStatus.CANCELLED}:
+            return assessment
+        return self.save_assessment(assessment.model_copy(update={"cancel_requested": True}))
+
+    def risk_test_runs(self, assessment_id: str) -> tuple[RiskTestRun, ...]:
+        with Session(self.engine) as session:
+            rows = session.scalars(
+                select(RiskTestRunRecord)
+                .where(RiskTestRunRecord.assessment_id == assessment_id)
+                .order_by(RiskTestRunRecord.created_at, RiskTestRunRecord.id)
+            ).all()
+        return tuple(RiskTestRun.model_validate(row.data) for row in rows)
+
+    def risk_test_run(self, run_id: str) -> RiskTestRun | None:
+        with Session(self.engine) as session:
+            row = session.get(RiskTestRunRecord, run_id)
+        return RiskTestRun.model_validate(row.data) if row else None
+
+    def save_risk_outcome(self, outcome: RiskRunOutcome) -> None:
+        with Session(self.engine) as session, session.begin():
+            row = session.get(RiskTestRunRecord, outcome.run.id)
+            if row is None:
+                raise KeyError(outcome.run.id)
+            row.status = outcome.run.status.value
+            row.data = outcome.run.model_dump(mode="json")
+            session.query(RiskTraceRecord).filter(
+                RiskTraceRecord.test_run_id == outcome.run.id
+            ).delete()
+            session.query(FindingRecord).filter(
+                FindingRecord.test_run_id == outcome.run.id
+            ).delete()
+            session.add_all(
+                [
+                    RiskTraceRecord(
+                        id=event.id,
+                        test_run_id=outcome.run.id,
+                        sequence=event.sequence,
+                        data=event.model_dump(mode="json"),
+                    )
+                    for event in outcome.events
+                ]
+            )
+            session.add_all(
+                [
+                    FindingRecord(
+                        id=finding.id,
+                        assessment_id=finding.assessment_id,
+                        test_run_id=finding.test_run_id,
+                        severity=finding.severity.value,
+                        data=finding.model_dump(mode="json"),
+                    )
+                    for finding in outcome.findings
+                ]
+            )
+
+    def risk_events(self, run_id: str, after_sequence: int = 0) -> tuple[TraceEvent, ...]:
+        with Session(self.engine) as session:
+            rows = session.scalars(
+                select(RiskTraceRecord)
+                .where(
+                    RiskTraceRecord.test_run_id == run_id,
+                    RiskTraceRecord.sequence > after_sequence,
+                )
+                .order_by(RiskTraceRecord.sequence)
+            ).all()
+        return tuple(TraceEvent.model_validate(row.data) for row in rows)
+
+    def risk_findings(self, assessment_id: str) -> tuple[Finding, ...]:
+        with Session(self.engine) as session:
+            rows = session.scalars(
+                select(FindingRecord)
+                .where(FindingRecord.assessment_id == assessment_id)
+                .order_by(FindingRecord.severity, FindingRecord.id)
+            ).all()
+        return tuple(Finding.model_validate(row.data) for row in rows)
+
+    def save_risk_report(self, report: RiskReport, html: str) -> RiskReport:
+        with Session(self.engine) as session, session.begin():
+            row = session.get(RiskReportRecord, report.assessment_id)
+            if row:
+                row.data = report.model_dump(mode="json")
+                row.html = html
+            else:
+                session.add(
+                    RiskReportRecord(
+                        assessment_id=report.assessment_id,
+                        data=report.model_dump(mode="json"),
+                        html=html,
+                    )
+                )
+        return report
+
+    def risk_report(self, assessment_id: str) -> RiskReport | None:
+        with Session(self.engine) as session:
+            row = session.get(RiskReportRecord, assessment_id)
+        return RiskReport.model_validate(row.data) if row else None
+
+    def risk_report_html(self, assessment_id: str) -> str | None:
+        with Session(self.engine) as session:
+            row = session.get(RiskReportRecord, assessment_id)
+        return row.html if row else None
+
+    def save_attestation(self, assessment_id: str, attestation: Attestation) -> Attestation:
+        with Session(self.engine) as session, session.begin():
+            row = session.get(AttestationRecord, attestation.id)
+            if row:
+                row.data = attestation.model_dump(mode="json")
+            else:
+                session.add(
+                    AttestationRecord(
+                        id=attestation.id,
+                        assessment_id=assessment_id,
+                        data=attestation.model_dump(mode="json"),
+                    )
+                )
+        return attestation
 
     def create_tournament(
         self,

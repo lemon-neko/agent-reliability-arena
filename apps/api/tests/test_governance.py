@@ -2,9 +2,13 @@ import subprocess
 from pathlib import Path
 
 import yaml
+from tools.build_public_leaderboard import OUTPUT as LEADERBOARD_OUTPUT
+from tools.build_public_leaderboard import rendered as rendered_leaderboard
 from tools.check_change_note import is_material_change, missing_note_for_changes, validate_all_notes
 from tools.check_docs import broken_links
 from tools.check_project_map import load_project_map, validate_project_map
+from tools.export_risk_schemas import OUTPUTS as RISK_SCHEMA_OUTPUTS
+from tools.export_risk_schemas import rendered_schema as rendered_risk_schema
 from tools.export_scenario_schema import OUTPUT, rendered_schema
 
 from arena.domain.models import ScenarioSpec
@@ -20,6 +24,15 @@ def test_markdown_links_and_navigation_files_are_valid() -> None:
 
 def test_scenario_json_schema_is_current() -> None:
     assert OUTPUT.read_text(encoding="utf-8") == rendered_schema()
+
+
+def test_risk_contract_json_schemas_are_current() -> None:
+    for output, model in RISK_SCHEMA_OUTPUTS.items():
+        assert output.read_text(encoding="utf-8") == rendered_risk_schema(model)
+
+
+def test_public_leaderboard_artifact_is_current() -> None:
+    assert LEADERBOARD_OUTPUT.read_text(encoding="utf-8") == rendered_leaderboard()
 
 
 def test_example_scenario_matches_the_public_type() -> None:

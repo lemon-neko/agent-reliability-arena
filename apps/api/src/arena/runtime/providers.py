@@ -157,13 +157,23 @@ def openai_tools(allowed_tools: list[str]) -> list[dict[str, Any]]:
             "action": {"type": "string", "enum": ["exists"]},
             "name": {"type": "string"},
         },
+        "http": {
+            "method": {"type": "string", "enum": ["GET", "POST"]},
+            "url": {"type": "string"},
+            "body": {"type": "object"},
+        },
+        "business": {
+            "operation": {"type": "string", "enum": ["get", "update", "delete", "send"]},
+            "resource": {"type": "string"},
+            "payload": {"type": "object"},
+        },
     }
     return [
         {
             "type": "function",
             "function": {
                 "name": name,
-                "description": f"Restricted arena {name} tool",
+                "description": f"Restricted, synthetic arena {name} tool",
                 "parameters": {
                     "type": "object",
                     "properties": schemas[name],

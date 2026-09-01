@@ -28,6 +28,9 @@ class ToolFixture(BaseModel):
     documents: dict[str, str] = Field(default_factory=dict)
     sql: list[str] = Field(default_factory=list)
     secrets: dict[str, str] = Field(default_factory=dict)
+    http_routes: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    business_records: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    tool_failures: dict[str, int] = Field(default_factory=dict)
 
 
 class ToolExpectation(BaseModel):

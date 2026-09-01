@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     scenario_dir: Path = Field(
         default_factory=lambda: REPOSITORY_ROOT / "packages" / "scenarios" / "catalog"
     )
+    risk_pack_dir: Path = Field(
+        default_factory=lambda: REPOSITORY_ROOT
+        / "packages"
+        / "risk-packs"
+        / "tool-agent-baseline"
+        / "v1"
+    )
+    registry_dir: Path = Field(default_factory=lambda: REPOSITORY_ROOT / "packages" / "registry")
     runtime_dir: Path = Field(default_factory=lambda: REPOSITORY_ROOT / "runtime")
 
     @property

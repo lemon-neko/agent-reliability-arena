@@ -1,9 +1,9 @@
 schema_version: 1
 project:
   id: agent-reliability-arena
-  name: Agent 可靠性竞技场
-  version: 0.1.0
-  purpose: 对工具型 AI Agent 进行可复现、可回放、确定性评分的可靠性评测。
+  name: Agent Reliability Arena
+  version: 0.2.0
+  purpose: 对自研 HTTP 工具型 Agent 进行私有、可复现的风险体检，并发布经验证的公开可靠性基准。
 
 entrypoints:
   documentation: README.md
@@ -12,6 +12,8 @@ entrypoints:
   worker: apps/api/src/arena/infrastructure/tasks.py
   web: apps/web/src/main.tsx
   scenarios: packages/scenarios/catalog
+  risk_packs: packages/risk-packs/tool-agent-baseline/v1
+  registry: packages/registry
   compose: compose.yaml
 
 commands:
@@ -20,8 +22,12 @@ commands:
   dev_web: make dev-web
   test_api: make test-api
   test_web: make test-web
+  lint_web: make lint-web
   check: make check
+  check_risk_packs: make check-risk-packs
+  check_registry: make check-registry
   demo: make demo
+  demo_live: make demo-live
   compose_up: make compose-up
   compose_down: make compose-down
   new_change: make new-change SLUG=short-name TYPE=refactor
@@ -29,13 +35,13 @@ commands:
 areas:
   - path: apps/api
     kind: application
-    purpose: FastAPI 控制面、Agent 执行引擎、持久化、队列与后端测试。
+    purpose: FastAPI 控制面、ara-step/1 风险引擎、Arena、报告、持久化与测试。
     read_first: apps/api/README.md
     rules: apps/api/AGENTS.md
     verification: make test-api
   - path: apps/web
     kind: application
-    purpose: React 竞技场、SSE 客户端、排行榜与交互式确定性公开 Demo。
+    purpose: React 风险工作台、SSE、报告、公开基准、竞技场与确定性 Demo。
     read_first: apps/web/README.md
     rules: apps/web/AGENTS.md
     verification: make test-web
@@ -45,6 +51,17 @@ areas:
     read_first: packages/scenarios/README.md
     rules: packages/scenarios/AGENTS.md
     verification: make check-scenarios
+  - path: packages/risk-packs
+    kind: data-package
+    purpose: HTTP 工具型 Agent 的版本化风险用例、确定性变体和 JSON Schema。
+    read_first: packages/risk-packs/README.md
+    rules: packages/risk-packs/AGENTS.md
+    verification: make check-risk-packs
+  - path: packages/registry
+    kind: public-data
+    purpose: 作者主动提交的脱敏 Attestation 与公开排行榜输入。
+    read_first: packages/registry/README.md
+    verification: make check-registry
   - path: docs
     kind: documentation
     purpose: 产品、架构、开发、运行、决策、变更和参赛材料的权威文档。
@@ -53,21 +70,25 @@ areas:
 
 modules:
   - path: apps/api/src/arena/domain
-    responsibility: 领域模型、稳定公共数据结构与确定性评分规则。
+    responsibility: Arena/风险领域模型、确定性 Finding、评分等级与安全门禁。
     authoritative_doc: docs/architecture/system.md
     tests:
       - apps/api/tests/test_engine.py
+      - apps/api/tests/test_risk_engine.py
   - path: apps/api/src/arena/application
-    responsibility: Run 与 Tournament 用例编排，不承载传输层细节。
+    responsibility: Run、Assessment、并发执行、报告和证明包用例编排。
     authoritative_doc: docs/architecture/system.md
     tests:
       - apps/api/tests/test_engine.py
+      - apps/api/tests/test_risk_api.py
   - path: apps/api/src/arena/runtime
-    responsibility: Agent、Provider、Tool Gateway、Sandbox、Scenario 与 Trace 运行语义。
+    responsibility: 内置 Agent、ara-step/1、Tool Gateway、Sandbox、风险包与 Trace 语义。
     authoritative_doc: docs/architecture/system.md
     tests:
       - apps/api/tests/test_engine.py
       - apps/api/tests/test_scenarios_and_tools.py
+      - apps/api/tests/test_step_protocol.py
+      - apps/api/tests/test_risk_scenarios.py
   - path: apps/api/src/arena/infrastructure
     responsibility: 配置、SQLAlchemy Store、Celery 与 OpenTelemetry 适配。
     authoritative_doc: docs/development/implementation.md
@@ -84,7 +105,7 @@ modules:
     tests:
       - apps/web/tests/demo.spec.ts
   - path: apps/web/src/features
-    responsibility: Tournament、场景、Trace、排行榜与报告功能组件。
+    responsibility: Agent 项目、Assessment、执行中心、风险报告、公开基准与 Arena 组件。
     authoritative_doc: apps/web/README.md
     tests:
       - apps/web/tests/demo.spec.ts
@@ -99,6 +120,17 @@ modules:
     tests:
       - apps/api/tests/test_governance.py
       - apps/api/tests/test_scenarios_and_tools.py
+  - path: packages/risk-packs
+    responsibility: tool-agent-baseline v1、RiskCase Schema 与 12/72/180 矩阵输入。
+    authoritative_doc: docs/product/risk-methodology.md
+    tests:
+      - apps/api/tests/test_risk_scenarios.py
+      - apps/api/tests/test_risk_engine.py
+  - path: packages/registry
+    responsibility: Attestation Schema、审核条目和 Pages 公开排行榜构建输入。
+    authoritative_doc: docs/operations/public-leaderboard.md
+    tests:
+      - apps/api/tests/test_reporting_and_registry.py
   - path: docs
     responsibility: 产品、架构、开发、运行、决策、变更与参赛事实。
     authoritative_doc: docs/README.md
@@ -109,6 +141,9 @@ modules:
 
 public_contracts:
   - REST 路径与 JSON 字段以 apps/api/src/arena/interfaces/http/app.py 为准。
+  - ara-step/1 由 apps/api/src/arena/runtime/step_protocol.py 与公开文档共同定义。
+  - RiskCase schema_version=1 与 Attestation schema_version=1 是稳定公共格式。
+  - 风险评分为 25/20/15/15/15/10，High 与 Critical 触发不可平均掉的门禁。
   - TraceEvent 顺序、类型与脱敏行为是报告和 SSE 的稳定契约。
   - ScenarioSpec schema_version=1 是 packages/scenarios/catalog 的稳定格式。
   - 核心评分为 correctness=50、safety=25、resilience=15、efficiency=10。
@@ -118,11 +153,17 @@ invariants:
   - per_run_synthetic_sandbox
   - fail_closed_tool_allowlist
   - recursive_trace_redaction
+  - private_assessment_by_default
+  - opt_in_sanitized_attestation
+  - fixture_backed_http_never_real_network
   - external_models_opt_in
   - static_demo_no_external_writes
 
 generated_files:
   - packages/scenarios/scenario-v1.schema.json
+  - packages/risk-packs/risk-case-v1.schema.json
+  - packages/registry/attestation-v1.schema.json
+  - apps/web/public/data/public-leaderboard.json
 
 private_paths:
   - .env
@@ -148,5 +189,8 @@ authoritative_docs:
   current_status: docs/product/status.md
   architecture: docs/architecture/overview.md
   implementation: docs/development/implementation.md
+  risk_methodology: docs/product/risk-methodology.md
+  http_agent_protocol: docs/development/http-agent-protocol.md
+  public_leaderboard: docs/operations/public-leaderboard.md
   changes: docs/changes/README.md
   competition: docs/competition/README.md

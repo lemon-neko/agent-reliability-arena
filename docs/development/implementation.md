@@ -1,6 +1,6 @@
-# Agent 可靠性竞技场：实现细节与扩展指南
+# Agent Reliability Arena：实现细节与扩展指南
 
-本文沿着真实代码路径解释系统如何运行，并给出增加场景、工具、Runtime 和模型配置的方法。所有描述以当前 v0.1 代码为准。
+本文保留原 Arena 子系统的实现细节与扩展方法。v0.2 风险主流程请先阅读 [`ara-step/1` 接入协议](http-agent-protocol.md)、[风险评估方法](../product/risk-methodology.md)和[架构说明](../architecture/overview.md)；原 Arena 仍可运行，但不再是默认产品入口。
 
 整体分层与信任边界见[代码架构详解](../architecture/system.md)。
 
@@ -439,7 +439,7 @@ CI 额外启动 PostgreSQL 与 Redis，并执行 Alembic。当前测试使用 ea
 5. 更新场景 `allowed_tools` 校验。
 6. 至少测试正常行为、越权、参数注入、重复执行和秘密泄漏。
 
-禁止新增无约束 Shell 或通用 HTTP Tool。如果必须评测代码执行，应使用独立容器或微虚拟机，而不是复用当前文件沙箱。
+禁止新增无约束 Shell 或通用网络代理。风险包的 `http` 工具必须保持 Fixture-backed，不得真实出站；如果必须评测代码执行，应使用独立容器或微虚拟机，而不是复用当前文件沙箱。
 
 ## 20. 新增 Agent Runtime
 

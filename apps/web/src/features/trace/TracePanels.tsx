@@ -25,10 +25,11 @@ export function TracePanel({ run, frozenEvents }: { run: Run | null; frozenEvent
     refetchInterval: 1000,
   });
   const [streamed, setStreamed] = useState<TraceEvent[]>([]);
+  const runId = run?.id;
   useEffect(() => {
     setStreamed([]);
-    if (!run || DEMO_MODE) return;
-    const source = new EventSource(`/api/runs/${run.id}/events`);
+    if (!runId || DEMO_MODE) return;
+    const source = new EventSource(`/api/runs/${runId}/events`);
     const receive = (event: MessageEvent) => {
       const next = JSON.parse(event.data) as TraceEvent;
       setStreamed((current) => current.some((item) => item.id === next.id) ? current : [...current, next]);
@@ -37,7 +38,7 @@ export function TracePanel({ run, frozenEvents }: { run: Run | null; frozenEvent
     source.addEventListener("end", () => source.close());
     source.onerror = () => source.close();
     return () => source.close();
-  }, [run?.id]);
+  }, [runId]);
   const events = DEMO_MODE ? frozenEvents : streamed.length ? streamed : live.data?.events ?? [];
   const approval = events.find((event) => event.name === "approval.requested");
   const decide = useMutation({ mutationFn: (decision: "approve" | "reject") => api.decideApproval(run!.id, String(approval?.payload.id), decision) });

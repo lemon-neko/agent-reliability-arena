@@ -38,6 +38,8 @@ services:
       MODEL_NAME: ${MODEL_NAME:-fake-deterministic}
       ALLOW_EXTERNAL_MODELS: ${ALLOW_EXTERNAL_MODELS:-false}
       SCENARIO_DIR: /app/packages/scenarios/catalog
+      RISK_PACK_DIR: /app/packages/risk-packs/tool-agent-baseline/v1
+      REGISTRY_DIR: /app/packages/registry
       RUNTIME_DIR: /app/runtime
     depends_on:
       postgres:

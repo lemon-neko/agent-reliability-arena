@@ -1,65 +1,47 @@
 # 架构说明
 
-本页用于快速理解一次挑战的数据流和信任边界。完整模块职责、时序和架构债务见[代码架构详解](system.md)，当前实现边界见[项目状态](../product/status.md)。
+本页快速说明 v0.2 风险体检的数据流和信任边界。领域分层见[代码架构详解](system.md)，当前边界见[项目状态](../product/status.md)。
 
-## 一次挑战如何流动
+## 一次风险体检如何流动
 
 ```mermaid
 flowchart LR
-  UI["React 竞技场"] --> API["FastAPI 控制面"]
-  API --> Q["Redis + Celery"]
-  Q --> E["竞技场执行引擎"]
-  E --> A["AgentAdapter"]
-  A --> M["OpenAI-compatible 模型"]
-  A --> G["受限工具网关"]
-  G --> S["单次运行临时目录"]
-  G --> D["单次运行 SQLite 副本"]
-  G --> R["虚构文档集合"]
-  E --> T["有序且脱敏的 Trace"]
-  T --> V["确定性裁判"]
-  V --> P[("PostgreSQL + pgvector")]
-  P --> API
+  UI["React 风险工作台"] --> API["FastAPI 控制面"]
+  API --> Q["Celery Assessment 任务"]
+  Q --> M["12 / 72 / 180 测试矩阵"]
+  M --> P["1–8 并发 RiskEngine"]
+  P --> H["ara-step/1 HTTP Agent"]
+  H --> G["受限 Tool Gateway"]
+  G --> S["单 Run 合成沙箱"]
+  P --> T["有序脱敏 Trace"]
+  T --> O["确定性 Oracle 与安全门禁"]
+  O --> R["JSON / HTML 报告"]
+  R -. 作者主动导出 .-> A["脱敏 Attestation"]
+  A -. 审核 .-> L["公开 Registry / Pages 榜单"]
 ```
 
-控制面负责创建锦标赛与查询状态，Celery 负责调度运行，执行引擎把场景、Agent 和独立沙箱组合成一次 Run。模型不能直接碰文件或数据库，所有动作都必须经过工具网关。
+控制面保存 Agent Target、创建 Assessment 并查询状态；后台任务将版本化风险包扩展成固定矩阵。每个 Run 创建新沙箱，通过 HTTP 协议向被测 Agent 提供消息和允许工具。Agent 只返回下一步意图，平台执行工具、记录 Trace 并用确定性 Oracle 产生 Finding。
 
 ## 信任边界
 
-工具网关只暴露当前场景允许的能力：
+- Agent Endpoint 与其输出均视为不可信输入。
+- 本地范围只接受 loopback；公网范围只接受 HTTPS，解析到私网、link-local、reserved 等地址时拒绝。
+- 不跟随重定向，限制 JSON Content-Type、响应大小、步骤数和截止时间。
+- Agent 不接收 Oracle、禁止片段、评分权重或敏感 Fixture。
+- 不提供任意 Shell 或通用网络代理。`http` 工具只读取场景声明的模拟路由，`business` 工具只修改本 Run 的模拟记录。
+- 文件路径解析后必须位于本 Run 根目录，SQL 只连接独享 SQLite，检索只访问本场景文档。
+- 凭证值只在 Worker 运行时从环境变量读取，数据库只保存变量名称。
 
-- 不存在任意 Shell 适配器。
-- 不存在通用 HTTP 适配器。
-- 文件路径解析符号链接后，必须仍位于本次 Run 的根目录。
-- SQL 只连接本次 Run 独享的 SQLite 场景副本。
-- RAG 只能检索本场景的虚构文档。
-- 检索结果属于不可信数据，其中出现的“指令”不能改变系统规则。
+## 数据与隐私边界
 
-如果工具参数非法、能力未授权或目标越界，网关默认拒绝，而不是尝试猜测用户意图。
+私有报告可以包含脱敏 Trace 证据，但不会自动上传。公开 Attestation 只保留 Agent 公共标识、版本、测试包和 Runner 版本、门禁后分数、风险计数与 Canonical Report SHA-256；不含 Endpoint、Prompt、Fixture、凭证或完整 Trace。
 
-## 可回放轨迹
+公开榜单只排名 `reproducible` 和 `verified` 条目，`self_reported` 只显示为自报告。榜单表达固定测试条件下的结果，不是绝对可信认证。
 
-模型回合、工具请求、工具结果、重试、人工审批、错误与评分都会形成递增序号的 `TraceEvent`。敏感键、令牌形态与场景 Canary 在持久化前递归脱敏。
+## 与原 Arena 的关系
 
-Trace 既用于前端实时展示，也作为确定性裁判的输入。由此可以回答的不只是“最后成功了吗”，还包括“它到底是怎么成功或怎么翻车的”。
-
-## 数据持久化
-
-PostgreSQL 保存场景元数据、Agent 配置、锦标赛、运行、Trace、审批与评分。pgvector 为后续的失败聚类和相似轨迹分析预留；场景内的 RAG 数据不会进入共享向量库，仍然按 Run 隔离。所有结构变更由 Alembic 管理。
-
-## 确定性评分
-
-场景身份由 `id + 语义版本` 唯一确定。核心裁判只读取冻结场景、最终运行状态和有序 Trace，不调用模型。对同一份 Run 重新评分，结果必须完全一致。
-
-可选 LLM Judge 可以给出文字观察，但无权修改 100 分核心评分。
+原 `Tournament → Run → Evaluation` 流程和接口继续存在，前端放在“竞技场”功能区。新主流程使用独立的 `AgentTarget → Assessment → TestRun → Finding → RiskReport → Attestation` 模型，共用配置、持久化、Trace、安全工具和部署基础设施，不改变原数据库表语义。
 
 ## 公开 Demo 边界
 
-Vite 支持 `VITE_DEMO_MODE=true`。开启后，前端只使用随构建发布的冻结 JSON 与确定性剧本：
-
-- 比赛选择、事件播放和审批决定只保存在当前页面内存。
-- 不发送 POST、PUT、PATCH 或 DELETE 请求。
-- 不连接本地数据库。
-- 不接触模型地址或 API Key。
-- 只展示虚构场景、脱敏轨迹、模拟审批和确定性分数。
-
-公开 Demo 是交互式回放，不宣称现场调用真实模型；本地完整模式仍通过 REST/SSE 展示真实执行引擎产生的 Trace。
+`VITE_DEMO_MODE=true` 时，前端只读取随构建发布的演示 JSON，并在浏览器内确定性推进 Standard 的 72 次测试。它不连接 Agent、后端或数据库，不发送写请求，也不把模拟分数提交 Registry。`make demo-live` 才会启动真实 API、两个参考 Agent Endpoint 和本地完整评测流程。

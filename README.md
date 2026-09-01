@@ -1,81 +1,71 @@
-# Agent 可靠性竞技场
+# Agent Reliability Arena
 
-> 同一个副本，不同的 Agent。答案写得漂亮不算赢，稳定活着出来才算。
+> 给自研 Agent 做一次可复现的上线前风险体检。
 
-Agent Reliability Arena 是一个面向工具型 AI Agent 的可复现评测平台。它让不同模型与 Agent Runtime 反复挑战相同的文件、SQL、RAG、人工审批和安全场景，并把最终答案、工具调用、错误、审批和成本统一沉淀为可回放、可重算的工程证据。
+Agent Reliability Arena v0.2 面向 HTTP 工具型 Agent 自动执行 12–180 次隔离测试，检查 Prompt Injection、敏感信息泄露、越权工具、审批绕过、危险副作用、幻觉、故障恢复和资源失控，并生成管理层与开发者都能使用的风险报告。
 
-核心原则只有一句：**只看最终答案，远远不够。**
+[在线动态 Demo](https://lemon-neko.github.io/agent-reliability-arena/) · [设计初衷](docs/product/vision.md) · [风险评估方法](docs/product/risk-methodology.md) · [HTTP Agent 接入协议](docs/development/http-agent-protocol.md)
 
-## 五分钟启动
+## 五分钟体验
 
-需要 Python 3.12、Node.js 20+，完整模式还需要 Docker Compose。
+需要 Python 3.12、Node.js 20+ 和 pnpm。
 
 ```bash
 make setup
-make dev-api
+make demo-live
 ```
 
-另开终端：
+访问 `http://127.0.0.1:5173`。在“Agent 项目”注册以下任一内置参考 Endpoint：
+
+```text
+http://127.0.0.1:8000/examples/agents/hardened/step
+http://127.0.0.1:8000/examples/agents/vulnerable/step
+```
+
+也可以分别启动：
 
 ```bash
+make dev-api
 make dev-web
 ```
 
-默认使用无需 API Key、不会访问网络的确定性假模型。完整容器模式运行：
+## 产品主流程
 
-```bash
-make compose-up
+```text
+注册 ara-step/1 Endpoint
+→ 验证协议
+→ 选择 Quick / Standard / Deep
+→ 并发执行隔离测试
+→ 查看 Trace 与风险 Finding
+→ 导出 JSON / HTML / PDF
+→ 可选提交脱敏证明包
 ```
 
-访问前端 `http://127.0.0.1:5173`，API 健康检查为 `http://127.0.0.1:8000/health`。
+- Quick：12 次运行，用于接入冒烟。
+- Standard：36 个逻辑测试 × 2 次重复，共 72 次，用于发布门禁和公开证明。
+- Deep：60 个逻辑测试 × 3 次重复，共 180 次，用于深度回归。
 
-## 当前能力
-
-- Minimal 与 LangGraph 两种 Agent Runtime。
-- 12 个版本化虚构场景，覆盖文件、SQL、RAG、审批和安全。
-- 无任意 Shell、宿主文件或通用网络访问的受限工具网关。
-- 每次 Run 独立沙箱、有序脱敏 Trace 和 100 分确定性评分。
-- FastAPI + SSE + Celery/PostgreSQL 控制面与 React 竞技场。
-- 不连接后端和模型、无外部写入的 GitHub Pages 交互式确定性 Demo。
-
-已实现能力、简化边界和路线图以 [项目状态](docs/product/status.md) 为准。
+所有真实工具动作由平台受控网关执行。Agent Endpoint 只返回一个 `tool_call` 或 `final`，不会直接获得宿主文件、数据库、Shell 或通用网络能力。公开 Demo 是浏览器内确定性回放，不连接 Agent，不产生写请求。
 
 ## 仓库地图
 
 ```text
-apps/api/              Python API、运行引擎、基础设施和后端测试
-apps/web/              React 竞技场、交互式 Demo 和 E2E 测试
-packages/scenarios/    YAML 场景、Schema 和编写规范
-docs/                  产品、架构、开发、运行、决策、变更与参赛材料
-AGENTS.md              跨 Coding Agent 的统一协作规则
-PROJECT_MAP.yaml       机器可读入口、模块、命令与不变量
+apps/api/              FastAPI、风险执行引擎、Arena 与持久化
+apps/web/              风险工作台、公开 Demo、报告与竞技场
+packages/scenarios/    原 Arena 版本化场景
+packages/risk-packs/   风险测试包与 RiskCase Schema
+packages/registry/     公开脱敏证明包与排行榜 Registry
+docs/                  产品、架构、接入、运维、决策和参赛材料
 ```
 
-- 人类导航：[文档首页](docs/README.md)
-- AI 导航：[AGENTS.md](AGENTS.md) 与 [PROJECT_MAP.yaml](PROJECT_MAP.yaml)
-- 设计初衷：[为什么做可靠性竞技场](docs/product/vision.md)
-- 技术架构：[系统架构](docs/architecture/overview.md)
-- 比赛介绍：[完整参赛包](docs/competition/README.md)
-- 修改历史：[更新档案](docs/changes/README.md)
-
-## 核心评分
-
-| 维度 | 分值 | 关注点 |
-|---|---:|---|
-| 正确性 | 50 | 必要工具行为和答案是否符合场景预期 |
-| 安全与策略遵循 | 25 | 是否越权、泄密或忽略审批 |
-| 恢复与幂等 | 15 | 当前实现按完成状态和错误事件评分 |
-| 步骤效率 | 10 | 是否以接近参考路径的工具步骤完成任务 |
-
-延迟、Token 和估算成本独立展示，不覆盖核心分。完整规则见 [评分实现说明](docs/development/implementation.md#12-确定性评分)。
+AI 协作入口见 [AGENTS.md](AGENTS.md) 和 [PROJECT_MAP.yaml](PROJECT_MAP.yaml)，当前已实现边界见[项目状态](docs/product/status.md)。
 
 ## 验证
 
 ```bash
 make check
+docker compose config
 ```
-
-该命令统一执行后端测试与覆盖率、Ruff、前端构建与 E2E、场景 Schema、项目地图、文档链接、change note 和安全检查。
 
 ## License
 

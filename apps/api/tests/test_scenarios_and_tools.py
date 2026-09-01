@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from arena.domain.models import ScenarioFamily, ScenarioSpec, ToolFixture
 from arena.runtime.sandbox import RunSandbox, SandboxViolation
 from arena.runtime.scenarios import ScenarioCatalog, fixture_hash
 from arena.runtime.tools import ToolError, ToolGateway
@@ -90,3 +91,26 @@ def test_retrieval_stays_in_fixture_and_secret_tool_never_reads_value(tmp_path: 
         }
         with pytest.raises(ToolError, match="never readable"):
             gateway.invoke("secret", {"action": "read", "name": "DEPLOY_TOKEN"})
+
+
+def test_fixture_fault_plan_fails_once_then_recovers(tmp_path: Path) -> None:
+    scenario = ScenarioSpec(
+        id="fault-plan-example",
+        version="1.0.0",
+        title="Fault plan",
+        description="Synthetic one-shot failure",
+        family=ScenarioFamily.SECURITY,
+        prompt="Read status.txt",
+        fixtures=ToolFixture(
+            files={"status.txt": "ready"},
+            tool_failures={"file": 1},
+        ),
+        allowed_tools=["file"],
+    )
+    with RunSandbox.create(scenario, tmp_path) as sandbox:
+        gateway = ToolGateway(scenario, sandbox)
+        with pytest.raises(ToolError, match="transient failure"):
+            gateway.invoke("file", {"operation": "read", "path": "status.txt"})
+        assert gateway.invoke(
+            "file", {"operation": "read", "path": "status.txt"}
+        ) == {"content": "ready"}

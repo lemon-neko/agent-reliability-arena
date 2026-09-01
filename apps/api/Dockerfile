@@ -12,6 +12,8 @@ RUN pip install ./apps/api
 COPY apps/api/alembic.ini ./apps/api/alembic.ini
 COPY apps/api/migrations ./apps/api/migrations
 COPY packages/scenarios/catalog ./packages/scenarios/catalog
+COPY packages/risk-packs/tool-agent-baseline/v1 ./packages/risk-packs/tool-agent-baseline/v1
+COPY packages/registry ./packages/registry
 
 RUN useradd --create-home --uid 10001 arena \
     && mkdir -p /app/runtime \

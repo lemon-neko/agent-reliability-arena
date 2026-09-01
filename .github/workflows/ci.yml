@@ -39,6 +39,8 @@ jobs:
       - run: make lint-api
       - run: make test-api
       - run: make check-scenarios
+      - run: make check-risk-packs
+      - run: make check-registry
       - run: make check-governance
       - name: Require a change note for material changes
         env:
@@ -63,6 +65,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+      - run: pnpm lint
         working-directory: apps/web
       - run: pnpm build
         working-directory: apps/web

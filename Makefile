@@ -1,5 +1,6 @@
-.PHONY: setup dev-api dev-web test-api test-web lint-api check-scenarios \
-	check-governance export-scenario-schema demo security check compose-up compose-down new-change
+.PHONY: setup dev-api dev-web test-api test-web lint-api lint-web check-scenarios check-risk-packs \
+	check-registry check-governance export-scenario-schema export-risk-schemas demo demo-live \
+	security check compose-up compose-down new-change
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PYTHON := $(if $(wildcard $(ROOT_DIR)/.venv/bin/python),$(ROOT_DIR)/.venv/bin/python,python3)
@@ -25,8 +26,21 @@ test-web:
 lint-api:
 	cd apps/api && $(PYTHON) -m ruff check src tests migrations ../../tools
 
+lint-web:
+	cd apps/web && pnpm lint
+
 export-scenario-schema:
 	$(PYTHON) tools/export_scenario_schema.py
+
+export-risk-schemas:
+	$(PYTHON) tools/export_risk_schemas.py
+
+check-risk-packs:
+	$(PYTHON) tools/export_risk_schemas.py --check
+	$(PYTHON) -m pytest apps/api/tests/test_risk_scenarios.py -q
+
+check-registry:
+	$(PYTHON) tools/build_public_leaderboard.py --check
 
 check-scenarios:
 	$(PYTHON) tools/export_scenario_schema.py --check
@@ -38,11 +52,15 @@ check-governance:
 
 demo:
 	cd apps/web && VITE_DEMO_MODE=true pnpm build --mode demo
+	cd apps/web && pnpm exec vite preview --mode demo --host 127.0.0.1 --port 4173 --strictPort
+
+demo-live:
+	$(PYTHON) tools/demo_live.py
 
 security:
 	$(PYTHON) tools/security_guard.py
 
-check: lint-api test-api check-scenarios check-governance security test-web
+check: lint-api lint-web test-api check-scenarios check-risk-packs check-registry check-governance security test-web
 
 compose-up:
 	docker compose up --build

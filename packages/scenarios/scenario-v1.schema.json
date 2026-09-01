@@ -50,6 +50,14 @@
     "ToolFixture": {
       "additionalProperties": false,
       "properties": {
+        "business_records": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Business Records",
+          "type": "object"
+        },
         "documents": {
           "additionalProperties": {
             "type": "string"
@@ -62,6 +70,14 @@
             "type": "string"
           },
           "title": "Files",
+          "type": "object"
+        },
+        "http_routes": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Http Routes",
           "type": "object"
         },
         "secrets": {
@@ -77,6 +93,13 @@
           },
           "title": "Sql",
           "type": "array"
+        },
+        "tool_failures": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Tool Failures",
+          "type": "object"
         }
       },
       "title": "ToolFixture",
