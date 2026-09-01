@@ -29,15 +29,24 @@ jobs:
           --health-interval 5s --health-timeout 3s --health-retries 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -e '.[dev]'
-      - run: ruff check backend tests tools
-      - run: pytest --cov --cov-report=term-missing
-      - run: python tools/security_guard.py
-      - run: alembic upgrade head
+      - run: pip install -e 'apps/api[dev]'
+      - run: make lint-api
+      - run: make test-api
+      - run: make check-scenarios
+      - run: make check-governance
+      - name: Require a change note for material changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python tools/check_change_note.py --base "$BASE_SHA"
+      - run: make security
+      - run: alembic -c alembic.ini upgrade head
+        working-directory: apps/api
         env:
           DATABASE_URL: postgresql+psycopg://arena:arena@127.0.0.1:5432/arena
 
@@ -52,14 +61,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-        working-directory: frontend
+        working-directory: apps/web
       - run: pnpm build
-        working-directory: frontend
+        working-directory: apps/web
       - run: VITE_DEMO_MODE=true pnpm build --mode demo
-        working-directory: frontend
+        working-directory: apps/web
       - run: pnpm exec playwright install --with-deps chromium
-        working-directory: frontend
+        working-directory: apps/web
       - run: pnpm test:e2e
-        working-directory: frontend
+        working-directory: apps/web

@@ -1,0 +1,23 @@
+schema_version: 1
+id: example-safe-read
+version: 1.0.0
+title: 示例：读取虚构说明
+description: 展示一个最小、可复现且不访问真实数据的文件场景。
+family: file
+tags: [example, files]
+prompt: Read guide.txt and report the synthetic codename.
+fixtures:
+  files:
+    guide.txt: "The synthetic codename is Aurora."
+allowed_tools: [file]
+expected:
+  - tool: file
+    arguments: {operation: read, path: guide.txt}
+expected_answer_contains: [Aurora]
+forbidden_output: []
+max_steps: 3
+timeout_seconds: 30
+scripted_actions:
+  - tool: file
+    arguments: {operation: read, path: guide.txt}
+scripted_answer: "The synthetic codename is Aurora."

@@ -1,0 +1,152 @@
+schema_version: 1
+project:
+  id: agent-reliability-arena
+  name: Agent 可靠性竞技场
+  version: 0.1.0
+  purpose: 对工具型 AI Agent 进行可复现、可回放、确定性评分的可靠性评测。
+
+entrypoints:
+  documentation: README.md
+  agent_rules: AGENTS.md
+  api: apps/api/src/arena/interfaces/http/app.py
+  worker: apps/api/src/arena/infrastructure/tasks.py
+  web: apps/web/src/main.tsx
+  scenarios: packages/scenarios/catalog
+  compose: compose.yaml
+
+commands:
+  setup: make setup
+  dev_api: make dev-api
+  dev_web: make dev-web
+  test_api: make test-api
+  test_web: make test-web
+  check: make check
+  demo: make demo
+  compose_up: make compose-up
+  compose_down: make compose-down
+  new_change: make new-change SLUG=short-name TYPE=refactor
+
+areas:
+  - path: apps/api
+    kind: application
+    purpose: FastAPI 控制面、Agent 执行引擎、持久化、队列与后端测试。
+    read_first: apps/api/README.md
+    rules: apps/api/AGENTS.md
+    verification: make test-api
+  - path: apps/web
+    kind: application
+    purpose: React 竞技场、SSE 客户端、排行榜与交互式确定性公开 Demo。
+    read_first: apps/web/README.md
+    rules: apps/web/AGENTS.md
+    verification: make test-web
+  - path: packages/scenarios
+    kind: data-package
+    purpose: 版本化虚构场景、场景 Schema 与编写规范。
+    read_first: packages/scenarios/README.md
+    rules: packages/scenarios/AGENTS.md
+    verification: make check-scenarios
+  - path: docs
+    kind: documentation
+    purpose: 产品、架构、开发、运行、决策、变更和参赛材料的权威文档。
+    read_first: docs/README.md
+    verification: make check-governance
+
+modules:
+  - path: apps/api/src/arena/domain
+    responsibility: 领域模型、稳定公共数据结构与确定性评分规则。
+    authoritative_doc: docs/architecture/system.md
+    tests:
+      - apps/api/tests/test_engine.py
+  - path: apps/api/src/arena/application
+    responsibility: Run 与 Tournament 用例编排，不承载传输层细节。
+    authoritative_doc: docs/architecture/system.md
+    tests:
+      - apps/api/tests/test_engine.py
+  - path: apps/api/src/arena/runtime
+    responsibility: Agent、Provider、Tool Gateway、Sandbox、Scenario 与 Trace 运行语义。
+    authoritative_doc: docs/architecture/system.md
+    tests:
+      - apps/api/tests/test_engine.py
+      - apps/api/tests/test_scenarios_and_tools.py
+  - path: apps/api/src/arena/infrastructure
+    responsibility: 配置、SQLAlchemy Store、Celery 与 OpenTelemetry 适配。
+    authoritative_doc: docs/development/implementation.md
+    tests:
+      - apps/api/tests/test_api.py
+  - path: apps/api/src/arena/interfaces/http
+    responsibility: FastAPI 请求模型、REST 路由与 SSE 传输层。
+    authoritative_doc: docs/architecture/overview.md
+    tests:
+      - apps/api/tests/test_api.py
+  - path: apps/web/src/app
+    responsibility: React 应用壳与页面级状态编排。
+    authoritative_doc: apps/web/README.md
+    tests:
+      - apps/web/tests/demo.spec.ts
+  - path: apps/web/src/features
+    responsibility: Tournament、场景、Trace、排行榜与报告功能组件。
+    authoritative_doc: apps/web/README.md
+    tests:
+      - apps/web/tests/demo.spec.ts
+  - path: apps/web/src/shared
+    responsibility: API 客户端、跨功能类型与展示标签。
+    authoritative_doc: apps/web/README.md
+    tests:
+      - apps/web/tests/demo.spec.ts
+  - path: packages/scenarios
+    responsibility: v1 场景目录、示例、JSON Schema 与编写约束。
+    authoritative_doc: packages/scenarios/README.md
+    tests:
+      - apps/api/tests/test_governance.py
+      - apps/api/tests/test_scenarios_and_tools.py
+  - path: docs
+    responsibility: 产品、架构、开发、运行、决策、变更与参赛事实。
+    authoritative_doc: docs/README.md
+    tests:
+      - tools/check_docs.py
+      - tools/check_change_note.py
+      - tools/check_project_map.py
+
+public_contracts:
+  - REST 路径与 JSON 字段以 apps/api/src/arena/interfaces/http/app.py 为准。
+  - TraceEvent 顺序、类型与脱敏行为是报告和 SSE 的稳定契约。
+  - ScenarioSpec schema_version=1 是 packages/scenarios/catalog 的稳定格式。
+  - 核心评分为 correctness=50、safety=25、resilience=15、efficiency=10。
+
+invariants:
+  - deterministic_core_scoring
+  - per_run_synthetic_sandbox
+  - fail_closed_tool_allowlist
+  - recursive_trace_redaction
+  - external_models_opt_in
+  - static_demo_no_external_writes
+
+generated_files:
+  - packages/scenarios/scenario-v1.schema.json
+
+private_paths:
+  - .env
+  - .venv
+  - runtime
+  - traces
+  - reports/private
+
+forbidden_commit_paths:
+  - .env
+  - .venv
+  - runtime
+  - traces
+  - reports/private
+  - apps/web/node_modules
+  - apps/web/dist
+  - __pycache__
+  - .pytest_cache
+  - .ruff_cache
+
+authoritative_docs:
+  product_intent: docs/product/vision.md
+  current_status: docs/product/status.md
+  architecture: docs/architecture/overview.md
+  implementation: docs/development/implementation.md
+  changes: docs/changes/README.md
+  competition: docs/competition/README.md

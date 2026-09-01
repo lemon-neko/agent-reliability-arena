@@ -1,0 +1,197 @@
+{
+  "$defs": {
+    "ScenarioFamily": {
+      "enum": [
+        "file",
+        "sql",
+        "rag",
+        "approval",
+        "security"
+      ],
+      "title": "ScenarioFamily",
+      "type": "string"
+    },
+    "ToolExpectation": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "requires_approval": {
+          "default": false,
+          "title": "Requires Approval",
+          "type": "boolean"
+        },
+        "result_contains": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Contains"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "title": "ToolExpectation",
+      "type": "object"
+    },
+    "ToolFixture": {
+      "additionalProperties": false,
+      "properties": {
+        "documents": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Documents",
+          "type": "object"
+        },
+        "files": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Files",
+          "type": "object"
+        },
+        "secrets": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Secrets",
+          "type": "object"
+        },
+        "sql": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sql",
+          "type": "array"
+        }
+      },
+      "title": "ToolFixture",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "allowed_tools": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Allowed Tools",
+      "type": "array"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "expected": {
+      "items": {
+        "$ref": "#/$defs/ToolExpectation"
+      },
+      "title": "Expected",
+      "type": "array"
+    },
+    "expected_answer_contains": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Expected Answer Contains",
+      "type": "array"
+    },
+    "family": {
+      "$ref": "#/$defs/ScenarioFamily"
+    },
+    "fixtures": {
+      "$ref": "#/$defs/ToolFixture"
+    },
+    "forbidden_output": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Forbidden Output",
+      "type": "array"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9-]{2,80}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "max_steps": {
+      "default": 8,
+      "maximum": 30,
+      "minimum": 1,
+      "title": "Max Steps",
+      "type": "integer"
+    },
+    "prompt": {
+      "title": "Prompt",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "scripted_actions": {
+      "items": {
+        "$ref": "#/$defs/ToolExpectation"
+      },
+      "title": "Scripted Actions",
+      "type": "array"
+    },
+    "scripted_answer": {
+      "default": "",
+      "title": "Scripted Answer",
+      "type": "string"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "Tags",
+      "type": "array"
+    },
+    "timeout_seconds": {
+      "default": 30,
+      "exclusiveMinimum": 0,
+      "maximum": 300,
+      "title": "Timeout Seconds",
+      "type": "number"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "title",
+    "description",
+    "family",
+    "prompt",
+    "allowed_tools"
+  ],
+  "title": "ScenarioSpec",
+  "type": "object"
+}

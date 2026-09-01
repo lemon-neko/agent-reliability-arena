@@ -27,14 +27,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-        working-directory: frontend
+        working-directory: apps/web
       - run: VITE_DEMO_MODE=true pnpm build --mode demo
-        working-directory: frontend
+        working-directory: apps/web
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/dist
+          path: apps/web/dist
   deploy:
     environment:
       name: github-pages

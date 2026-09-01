@@ -8,7 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN_PATHS = re.compile(
-    r"(^|/)(\.env($|\.)|runtime|traces|reports/private|node_modules)(/|$)|\.(db|sqlite3?|pem|key)$",
+    r"(^|/)(\.env($|\.)|traces|reports/private|node_modules)(/|$)"
+    r"|^runtime/|\.(db|sqlite3?|pem|key)$",
     re.I,
 )
 SECRET_PATTERNS = (
