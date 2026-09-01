@@ -19,9 +19,9 @@ apps/web/test-results/
 apps/web/playwright-report/
 # Local pre-refactor dependency/build cache; source files were moved to apps/web/.
 apps/web/frontend/
-runtime/
-traces/
-reports/private/
+/runtime/
+/traces/
+/reports/private/
 *.sqlite
 *.sqlite3
 *.db

@@ -28,6 +28,7 @@ compatibility: additive
 - 将前端主导航调整为项目总览、Agent 项目、体检、执行、报告、公开基准和独立竞技场。
 - 补齐 ESLint 9 Flat Config，并将前端静态检查纳入根 `make check`。
 - 明确 Ruff 的 first-party 包边界，保证本地与 GitHub Actions 的 import 校验一致。
+- 将私有 `runtime/`、`traces/` 与 `reports/private/` 忽略规则锚定到仓库根目录，避免误排除 `arena.runtime` 新源码。
 
 ## 影响与兼容性
 
