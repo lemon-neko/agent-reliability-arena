@@ -27,6 +27,7 @@ compatibility: additive
 - 新增加固/脆弱参考 Agent、真实本地 Demo 与浏览器内 72 次动态公开 Demo。
 - 将前端主导航调整为项目总览、Agent 项目、体检、执行、报告、公开基准和独立竞技场。
 - 补齐 ESLint 9 Flat Config，并将前端静态检查纳入根 `make check`。
+- 明确 Ruff 的 first-party 包边界，保证本地与 GitHub Actions 的 import 校验一致。
 
 ## 影响与兼容性
 
@@ -48,4 +49,4 @@ REST、SSE、场景字段、报告 JSON 和原 Arena 用户行为保持可用；
 
 - ADR：[0002 — 本地私有风险体检与主动公开证明](../../decisions/0002-private-risk-audit-and-public-attestation.md)
 - Issue：无
-- Commit：待提交
+- Commit：`645eff8`
